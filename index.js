@@ -36,6 +36,14 @@ async function run() {
             res.send(result)
         })
 
+        app.get("/myProducts/:email", async (req, res) => {
+            console.log(req.params.email);
+            const products = await toysCollection.find({
+                postedBy: req.params.email
+            }).toArray();
+            res.send(products)
+        })
+
         app.post("/post-products", async (req, res) => {
             const body = req.body;
             body.createdAt = new Date();
