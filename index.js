@@ -30,30 +30,43 @@ async function run() {
 
         const toysCollection = client.db("toysCarDB").collection("products");
 
+
+        // const indexKeys = { toys_name: 1 };
+        // const indexOptions = { name: "toys_name" };
+        // const result = await toysCollection.createIndex(indexKeys, indexOptions)
+
         app.get("/allProducts", async (req, res) => {
             let query = req.query;
-            console.log(query);
+            // console.log(query);
 
             if (req.query?.email) {
                 query = { postedBy: req.query.email }
             }
 
-            if (req.query?.name) {
-                query = { toys_name: req.query.name }
-            }
+            // if (req.query?.name) {
+            //     query = { toys_name: req.query.name }
+            // }
 
             if (req.query?.subcategory) {
                 query = { sub_category: req.query.subCategory }
             }
             const sort = req.query.sort == "Ascending";
-            console.log(sort);
+            // console.log(sort);
             const result = await toysCollection.find(query).limit(20).sort({ Price: sort ? 1 : -1 }).toArray();
             // console.log(result);
             res.send(result)
         })
 
+        app.get("/allProducts/:text", async (req, res) => {
+            if (req.params.text == "Action-Car" || req.params.text == "Racing-Car" || req.params.text == "Police-Car") {
+                const result = await toysCollection.find({
+                    sub_category: req.params.text
+                }).toArray()
+                res.send(result)
+            }
+        })
+
         app.get("/singleProduct/:id", async (req, res) => {
-            // console.log(req.params.id);
             const product = await toysCollection.findOne({
                 _id: new ObjectId(req.params.id)
             })
@@ -61,18 +74,21 @@ async function run() {
         })
 
         app.get("/myProducts/:email", async (req, res) => {
-            // console.log(req.params.email);
             const products = await toysCollection.find({
                 postedBy: req.params.email
             }).toArray();
             res.send(products)
         })
 
-        app.get("/getProductsByName/:name", async (req, res) => {
+        app.get("/getProductsByName/:text", async (req, res) => {
+            const searchText = req.params?.text
             const result = await toysCollection.find({
-                toys_name: req.params.name
+                toys_name: { $regex: searchText, $options: "i" }
             }).toArray();
+            console.log(result);
             res.send(result)
+
+
         })
 
         app.post("/post-products", async (req, res) => {
@@ -94,7 +110,7 @@ async function run() {
         app.put("/updateProduct/:id", async (req, res) => {
             const id = req.params.id;
             const body = req.body;
-            console.log(body);
+            // console.log(body);
             const filter = { _id: new ObjectId(id) }
             const updateDoc = {
                 $set: {
