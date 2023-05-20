@@ -31,13 +31,29 @@ async function run() {
         const toysCollection = client.db("toysCarDB").collection("products");
 
         app.get("/allProducts", async (req, res) => {
-            const result = await toysCollection.find({}).sort({ createdAt: -1 }).toArray();
-            console.log(result);
+            let query = req.query;
+            console.log(query);
+
+            if (req.query?.email) {
+                query = { postedBy: req.query.email }
+            }
+
+            if (req.query?.name) {
+                query = { toys_name: req.query.name }
+            }
+
+            if (req.query?.subcategory) {
+                query = { sub_category: req.query.subCategory }
+            }
+            const sort = req.query.sort == "Ascending";
+            console.log(sort);
+            const result = await toysCollection.find(query).limit(20).sort({ Price: sort ? 1 : -1 }).toArray();
+            // console.log(result);
             res.send(result)
         })
 
         app.get("/singleProduct/:id", async (req, res) => {
-            console.log(req.params.id);
+            // console.log(req.params.id);
             const product = await toysCollection.findOne({
                 _id: new ObjectId(req.params.id)
             })
@@ -45,17 +61,24 @@ async function run() {
         })
 
         app.get("/myProducts/:email", async (req, res) => {
-            console.log(req.params.email);
+            // console.log(req.params.email);
             const products = await toysCollection.find({
                 postedBy: req.params.email
             }).toArray();
             res.send(products)
         })
 
+        app.get("/getProductsByName/:name", async (req, res) => {
+            const result = await toysCollection.find({
+                toys_name: req.params.name
+            }).toArray();
+            res.send(result)
+        })
+
         app.post("/post-products", async (req, res) => {
             const body = req.body;
             body.createdAt = new Date();
-            console.log(body);
+            // console.log(body);
             const result = await toysCollection.insertOne(body);
             if (result?.insertedId) {
                 return res.status(200).send(result)
