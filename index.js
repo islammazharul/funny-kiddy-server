@@ -26,33 +26,13 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        client.connect();
 
         const toysCollection = client.db("toysCarDB").collection("products");
 
 
-        // const indexKeys = { toys_name: 1 };
-        // const indexOptions = { name: "toys_name" };
-        // const result = await toysCollection.createIndex(indexKeys, indexOptions)
-
         app.get("/allProducts", async (req, res) => {
-            let query = req.query;
-            // console.log(query);
-
-            if (req.query?.email) {
-                query = { postedBy: req.query.email }
-            }
-
-            // if (req.query?.name) {
-            //     query = { toys_name: req.query.name }
-            // }
-
-            if (req.query?.subcategory) {
-                query = { sub_category: req.query.subCategory }
-            }
-            const sort = req.query.sort == "Ascending";
-            // console.log(sort);
-            const result = await toysCollection.find(query).limit(20).sort({ Price: sort ? 1 : -1 }).toArray();
+            const result = await toysCollection.find().limit(20).toArray();
             // console.log(result);
             res.send(result)
         })
@@ -91,21 +71,35 @@ async function run() {
 
         })
 
+
         app.post("/post-products", async (req, res) => {
             const body = req.body;
-            body.createdAt = new Date();
             // console.log(body);
-            const result = await toysCollection.insertOne(body);
-            if (result?.insertedId) {
-                return res.status(200).send(result)
-            }
-            else {
-                return res.status(404).send({
-                    message: "insert failed try again later",
-                    status: false
-                })
-            }
-        })
+            const result = await toysCollection.insertOne({
+                ...body,
+                Price: parseFloat(body.Price),
+            });
+            res.send(result);
+        });
+
+        app.get("/ascending", async (req, res) => {
+            const email = req.query.email;
+            const filter = { postedBy: email };
+            const result = await toysCollection
+                .find(filter)
+                .sort({ Price: 1 })
+                .toArray();
+            res.send(result);
+        });
+        app.get("/descending", async (req, res) => {
+            const email = req.query.email;
+            const filter = { postedBy: email };
+            const result = await toysCollection
+                .find(filter)
+                .sort({ Price: -1 })
+                .toArray();
+            res.send(result);
+        });
 
         app.put("/updateProduct/:id", async (req, res) => {
             const id = req.params.id;
