@@ -58,7 +58,7 @@ async function run() {
         })
 
         app.get("/allProducts/:text", async (req, res) => {
-            if (req.params.text == "Action-Car" || req.params.text == "Racing-Car" || req.params.text == "Police-Car") {
+            if (req.params.text == "Sports-Car" || req.params.text == "Regular-Car" || req.params.text == "Police-Car") {
                 const result = await toysCollection.find({
                     sub_category: req.params.text
                 }).toArray()
